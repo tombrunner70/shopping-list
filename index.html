@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopping List</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; background: #f3f4f6; margin: 0; padding: 2rem 1rem; color: #111827; }
+  main { max-width: 440px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  h1 { margin: 0 0 1rem; font-size: 1.5rem; }
+  form { display: flex; gap: .5rem; margin-bottom: 1rem; }
+  input[type=text] { flex: 1; padding: .6rem .8rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; }
+  button { cursor: pointer; border: 0; border-radius: 8px; font-size: 1rem; }
+  form button { background: #2563eb; color: #fff; padding: .6rem 1rem; }
+  form button:hover { background: #1d4ed8; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: .6rem; padding: .6rem 0; border-bottom: 1px solid #e5e7eb; }
+  li span { flex: 1; word-break: break-word; }
+  li.done span { text-decoration: line-through; color: #9ca3af; }
+  li input { width: 1.1rem; height: 1.1rem; }
+  li button { background: none; color: #ef4444; font-size: 1.2rem; padding: 0 .4rem; }
+  li button:hover { color: #b91c1c; }
+  .empty { color: #6b7280; justify-content: center; border-bottom: 0; }
+  footer { margin-top: 1rem; font-size: .85rem; color: #6b7280; display: flex; justify-content: space-between; }
+  footer button { background: none; color: #2563eb; font-size: .85rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🛒 Shopping List</h1>
+  <form id="form">
+    <input type="text" id="input" placeholder="Add an item…" autocomplete="off" required>
+    <button type="submit">Add</button>
+  </form>
+  <ul id="list"></ul>
+  <footer>
+    <span id="count"></span>
+    <button id="clear" type="button">Clear checked</button>
+  </footer>
+</main>
+<script>
+  const KEY = 'shopping-list';
+  let items = [];
+  try { items = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { items = []; }
+
+  const list = document.getElementById('list');
+  const input = document.getElementById('input');
+  const count = document.getElementById('count');
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) {}
+    render();
+  }
+
+  function render() {
+    list.innerHTML = '';
+    if (!items.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Your list is empty.';
+      list.appendChild(li);
+    }
+    items.forEach(item => {
+      const li = document.createElement('li');
+      if (item.done) li.className = 'done';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = item.done;
+      cb.onchange = () => { item.done = cb.checked; save(); };
+
+      const span = document.createElement('span');
+      span.textContent = item.text;
+
+      const del = document.createElement('button');
+      del.textContent = '✕';
+      del.title = 'Delete';
+      del.onclick = () => { items = items.filter(i => i.id !== item.id); save(); };
+
+      li.append(cb, span, del);
+      list.appendChild(li);
+    });
+    const left = items.filter(i => !i.done).length;
+    count.textContent = `${left} item${left === 1 ? '' : 's'} left`;
+  }
+
+  document.getElementById('form').onsubmit = e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    items.push({ id: Date.now() + Math.random(), text, done: false });
+    input.value = '';
+    save();
+  };
+
+  document.getElementById('clear').onclick = () => {
+    items = items.filter(i => !i.done);
+    save();
+  };
+
+  render();
+</script>
+</body>
+</html>
